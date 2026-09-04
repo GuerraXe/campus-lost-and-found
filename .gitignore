@@ -1,0 +1,32 @@
+# Machine-local scratch: the truststore + helper for a TLS-intercepting proxy.
+# Nothing here is needed to build on a normal network.
+/.local/
+
+# Build output
+/target/
+*.class
+
+# Local runtime config / secrets (never commit real secrets)
+*.env
+application-local.yml
+application-local.yaml
+application-local.properties
+
+# Maven wrapper: the launcher jar IS committed (standard practice); the Maven
+# distribution it downloads is cached under ~/.m2 and never here.
+
+# IDE
+/.idea/
+*.iml
+/.vscode/
+/.settings/
+/.project
+/.classpath
+/bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

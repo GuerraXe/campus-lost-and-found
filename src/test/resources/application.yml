@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:campus;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: true
+    clean-disabled: false
+
+campus:
+  auth:
+    jwt-secret: test-secret-test-secret-test-secret-0123456789
+    jwt-ttl-seconds: 1800
+    expose-verification-token: true
+    bootstrap-admin: false
+    login-max-failures: 5
+    login-lockout-minutes: 15
+  ratelimit:
+    enabled: false
+  matching:
+    suggest-threshold: 45
+    prefilter-days: 21
+    max-candidates-per-listing: 25
+    scorer-version: v1
+    weight-category: 0.30
+    weight-keywords: 0.30
+    weight-location: 0.15
+    weight-date: 0.15
+    weight-attributes: 0.10
+    date-decay-days: 14
+
+logging:
+  level:
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

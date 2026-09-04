@@ -1,0 +1,93 @@
+spring:
+  application:
+    name: campus-lost-and-found
+
+  datasource:
+    url: ${CAMPUS_DB_URL:jdbc:postgresql://localhost:5432/campus_lost_found}
+    username: ${CAMPUS_DB_USER:campus}
+    password: ${CAMPUS_DB_PASSWORD:campus}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+    default-property-inclusion: non_null
+
+  servlet:
+    multipart:
+      max-file-size: 64KB
+      max-request-size: 128KB
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+  max-http-request-header-size: 16KB
+
+# Only the health endpoint is exposed; SecurityConfig denies everything else under /actuator.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+campus:
+  auth:
+    # HS256 secret. MUST be overridden in production; startup fails if shorter than 32 bytes.
+    jwt-secret: ${CAMPUS_JWT_SECRET:dev-only-insecure-secret-change-me-32bytes-minimum!!}
+    jwt-ttl-seconds: ${CAMPUS_JWT_TTL_SECONDS:1800}
+    # With no SMTP wired, the email-verification token is returned by /auth/register so the
+    # flow is exercisable. Set false and wire a real mailer before any real deployment.
+    expose-verification-token: ${CAMPUS_EXPOSE_VERIFICATION_TOKEN:true}
+    verification-ttl-hours: 48
+    # Idempotent admin bootstrap on startup (only if the user does not already exist).
+    bootstrap-admin: ${CAMPUS_BOOTSTRAP_ADMIN:false}
+    admin-email: ${CAMPUS_ADMIN_EMAIL:}
+    admin-password: ${CAMPUS_ADMIN_PASSWORD:}
+    admin-display-name: ${CAMPUS_ADMIN_DISPLAY_NAME:Administrator}
+    login-max-failures: 5
+    login-lockout-minutes: 15
+
+  ratelimit:
+    enabled: true
+    # requests / window / seconds, per (user or client IP) per endpoint class
+    create-listing: { limit: 10, window-seconds: 3600 }
+    contact-message: { limit: 20, window-seconds: 3600 }
+    submit-claim: { limit: 10, window-seconds: 3600 }
+    submit-flag: { limit: 20, window-seconds: 3600 }
+    rescan: { limit: 5, window-seconds: 3600 }
+    max-tracked-keys: 20000
+
+  matching:
+    suggest-threshold: 45          # minimum score (0-100) to persist a suggested match
+    prefilter-days: 21             # candidate pre-filter: |lost.date - found.date| window
+    max-candidates-per-listing: 25 # cap stored candidates (top-K by score)
+    scorer-version: v1
+    weight-category: 0.30
+    weight-keywords: 0.30
+    weight-location: 0.15
+    weight-date: 0.15
+    weight-attributes: 0.10
+    date-decay-days: 14            # date sub-score reaches 0 at this many days apart
+
+  cors:
+    allowed-origins: ${CAMPUS_CORS_ORIGINS:}
