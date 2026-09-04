@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 User user = users.findById(parsed.userId()).orElse(null);
                 if (user != null
                         && !user.isDeleted()
-                        && parsed.passwordChangedAtEpoch() >= user.getPasswordChangedAt().getEpochSecond()) {
+                        && parsed.passwordChangedAtMillis() >= user.getPasswordChangedAt().toEpochMilli()) {
                     var principal = AppPrincipal.of(user);
                     var authn = new UsernamePasswordAuthenticationToken(
                             principal, null, authorities(user.getRole()));

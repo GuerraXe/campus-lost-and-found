@@ -53,12 +53,12 @@ public class MessageService {
 
     @Transactional(readOnly = true)
     public Page<ContactMessage> inbox(Long userId, Pageable pageable) {
-        return messages.findByRecipientIdOrderByCreatedAtDesc(userId, pageable);
+        return messages.findInbox(userId, pageable);
     }
 
     @Transactional(readOnly = true)
     public Page<ContactMessage> sent(Long userId, Pageable pageable) {
-        return messages.findBySenderIdOrderByCreatedAtDesc(userId, pageable);
+        return messages.findSent(userId, pageable);
     }
 
     @Transactional

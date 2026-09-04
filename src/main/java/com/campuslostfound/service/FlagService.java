@@ -50,7 +50,7 @@ public class FlagService {
         if (listing.getStatus() == ListingStatus.REMOVED) {
             throw new Exceptions.NotFoundException("Listing not found.");
         }
-        if (flags.existsByListingIdAndReporterIdAndStatusIn(listingId, actor.id(), UNRESOLVED)) {
+        if (flags.existsUnresolved(listingId, actor.id(), UNRESOLVED)) {
             throw new Exceptions.ConflictException(
                     "You already have an open report on this listing.");
         }

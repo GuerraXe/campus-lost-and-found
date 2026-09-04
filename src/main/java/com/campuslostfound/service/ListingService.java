@@ -140,7 +140,7 @@ public class ListingService {
                     "Cannot change status from " + listing.getStatus() + " to " + target + ".");
         }
         if (target == ListingStatus.RECOVERED && !actor.isModerator()) {
-            boolean hasApprovedClaim = claims.existsByListingIdAndStatus(id, ClaimStatus.APPROVED);
+            boolean hasApprovedClaim = claims.existsWithStatus(id, ClaimStatus.APPROVED);
             if (!hasApprovedClaim) {
                 throw new Exceptions.ValidationException(
                         "Mark as recovered only after a claim on this listing has been approved, "
@@ -180,7 +180,7 @@ public class ListingService {
 
     @Transactional(readOnly = true)
     public List<Listing> myListings(Long userId) {
-        return listings.findByReporterIdOrderByCreatedAtDesc(userId);
+        return listings.findByReporter(userId);
     }
 
     // --- helpers ---------------------------------------------------------------

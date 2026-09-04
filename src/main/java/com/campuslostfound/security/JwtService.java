@@ -37,7 +37,9 @@ public class JwtService {
         String jwt = Jwts.builder()
                 .subject(String.valueOf(user.getId()))
                 .claim("role", user.getRole().name())
-                .claim("pca", user.getPasswordChangedAt().getEpochSecond())
+                // epoch millis, not seconds: a logout-all bumps passwordChangedAt and must
+                // invalidate a token issued moments earlier in the same wall-clock second.
+                .claim("pca", user.getPasswordChangedAt().toEpochMilli())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key)
@@ -52,13 +54,14 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        long pca = c.get("pca", Number.class).longValue();
-        return new ParsedToken(Long.parseLong(c.getSubject()), c.get("role", String.class), pca);
+        long pcaMillis = c.get("pca", Number.class).longValue();
+        return new ParsedToken(Long.parseLong(c.getSubject()), c.get("role", String.class), pcaMillis);
     }
 
     public record IssuedToken(String token, long expiresInSeconds) {
     }
 
-    public record ParsedToken(Long userId, String role, long passwordChangedAtEpoch) {
+    /** {@code passwordChangedAtMillis} is the user's password-change cutoff at issue time. */
+    public record ParsedToken(Long userId, String role, long passwordChangedAtMillis) {
     }
 }

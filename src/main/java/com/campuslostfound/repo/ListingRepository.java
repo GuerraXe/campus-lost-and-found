@@ -3,7 +3,6 @@ package com.campuslostfound.repo;
 import com.campuslostfound.domain.Category;
 import com.campuslostfound.domain.Listing;
 import com.campuslostfound.domain.ListingKind;
-import com.campuslostfound.domain.ListingStatus;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,5 +37,6 @@ public interface ListingRepository
                                      @Param("dateFrom") LocalDate dateFrom,
                                      @Param("dateTo") LocalDate dateTo);
 
-    List<Listing> findByReporterIdOrderByCreatedAtDesc(Long reporterId);
+    @Query("select l from Listing l where l.reporter.id = :reporterId order by l.createdAt desc")
+    List<Listing> findByReporter(@Param("reporterId") Long reporterId);
 }

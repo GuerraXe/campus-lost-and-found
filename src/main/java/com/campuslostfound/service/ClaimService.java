@@ -57,7 +57,7 @@ public class ClaimService {
         if (actor.id().equals(listing.getReporterId())) {
             throw new Exceptions.ForbiddenException("You cannot claim your own listing.");
         }
-        if (claims.existsByListingIdAndClaimantIdAndStatus(listingId, actor.id(), ClaimStatus.PENDING)) {
+        if (claims.existsPending(listingId, actor.id(), ClaimStatus.PENDING)) {
             throw new Exceptions.ConflictException("You already have a pending claim on this listing.");
         }
 
@@ -77,12 +77,12 @@ public class ClaimService {
         Listing listing = listings.findById(listingId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Listing not found."));
         guard.requireOwnerOrModerator(actor, listing.getReporterId(), "listing's claims");
-        return claims.findByListingIdOrderByCreatedAtDesc(listingId);
+        return claims.findForListing(listingId);
     }
 
     @Transactional(readOnly = true)
     public List<Claim> mine(Long userId) {
-        return claims.findByClaimantIdOrderByCreatedAtDesc(userId);
+        return claims.findForClaimant(userId);
     }
 
     @Transactional

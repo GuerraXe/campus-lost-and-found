@@ -42,7 +42,7 @@ public class AccountService {
     @Transactional
     public void deleteOwnAccount(AppPrincipal actor) {
         User user = guard.requireUser(actor.id());
-        for (Listing listing : listings.findByReporterIdOrderByCreatedAtDesc(user.getId())) {
+        for (Listing listing : listings.findByReporter(user.getId())) {
             if (listing.getStatus() == ListingStatus.OPEN || listing.getStatus() == ListingStatus.MATCHED) {
                 listing.setStatus(ListingStatus.CLOSED);
             }

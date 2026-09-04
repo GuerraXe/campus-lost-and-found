@@ -16,7 +16,11 @@ public interface MatchCandidateRepository extends JpaRepository<MatchCandidate, 
         """)
     List<MatchCandidate> findForListing(@Param("listingId") Long listingId);
 
-    Optional<MatchCandidate> findByLostListingIdAndFoundListingId(Long lostId, Long foundId);
+    @Query("""
+        select mc from MatchCandidate mc
+        where mc.lostListing.id = :lostId and mc.foundListing.id = :foundId
+        """)
+    Optional<MatchCandidate> findByPair(@Param("lostId") Long lostId, @Param("foundId") Long foundId);
 
     @Query("""
         select count(mc) from MatchCandidate mc

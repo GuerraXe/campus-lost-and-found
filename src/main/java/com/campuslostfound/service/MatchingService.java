@@ -130,7 +130,7 @@ public class MatchingService {
             Listing found = listing.getKind() == ListingKind.FOUND ? listing : other;
 
             MatchCandidate existing = candidates
-                    .findByLostListingIdAndFoundListingId(lost.getId(), found.getId())
+                    .findByPair(lost.getId(), found.getId())
                     .orElse(null);
             if (existing != null && existing.getStatus() == MatchStatus.REJECTED) {
                 continue; // a rejected pair stays rejected
@@ -153,7 +153,7 @@ public class MatchingService {
 
     private MatchCandidate upsert(Listing lost, Listing found, MatchResult result) {
         MatchCandidate candidate = candidates
-                .findByLostListingIdAndFoundListingId(lost.getId(), found.getId())
+                .findByPair(lost.getId(), found.getId())
                 .orElse(null);
         List<MatchReason> reasons = result.reasons().stream()
                 .map(r -> new MatchReason(r.signal(), r.detail(), r.contribution()))
