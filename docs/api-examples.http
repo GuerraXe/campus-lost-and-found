@@ -1,0 +1,181 @@
+### Campus Lost & Found — example requests
+# Works with the IntelliJ / VS Code "REST Client" HTTP file runner.
+# Equivalent curl for each call is in the comment above it.
+# Run top to bottom: later requests reuse variables captured from earlier responses.
+
+@host = http://localhost:8080
+@api = {{host}}/api/v1
+
+
+### 1. Register the finder
+# curl -sX POST $api/auth/register -H 'Content-Type: application/json' \
+#   -d '{"email":"finder@campus.edu","password":"correct horse battery","displayName":"Fran"}'
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{ "email": "finder@campus.edu", "password": "correct horse battery", "displayName": "Fran" }
+
+> {% client.global.set("finderVerify", response.body.verificationToken); %}
+
+
+### 2. Verify the finder's email (token echoed by step 1 because no mailer is configured)
+# curl -sX POST $api/auth/verify -H 'Content-Type: application/json' -d '{"token":"<token>"}'
+POST {{api}}/auth/verify
+Content-Type: application/json
+
+{ "token": "{{finderVerify}}" }
+
+
+### 3. Log the finder in
+# curl -sX POST $api/auth/login -H 'Content-Type: application/json' \
+#   -d '{"email":"finder@campus.edu","password":"correct horse battery"}'
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "finder@campus.edu", "password": "correct horse battery" }
+
+> {% client.global.set("finderToken", response.body.accessToken); %}
+
+
+### 4. Finder reports a FOUND laptop (privateDetails stay withheld from the public)
+# curl -sX POST $api/listings -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{...}'
+POST {{api}}/listings
+Authorization: Bearer {{finderToken}}
+Content-Type: application/json
+
+{
+  "kind": "FOUND",
+  "title": "Found a Dell laptop",
+  "description": "Dell laptop, rainbow sticker on the lid, left on a desk in the library",
+  "category": "LAPTOP",
+  "building": "Main Library",
+  "area": "Second floor",
+  "eventDate": "2026-03-12",
+  "privateDetails": "Small crack in the lower-left corner of the lid",
+  "attributes": [ { "key": "BRAND", "value": "Dell" }, { "key": "COLOR", "value": "silver" } ]
+}
+
+> {% client.global.set("foundId", response.body.id); %}
+
+
+### 5. Register + verify + login a second user (the person who lost it)
+POST {{api}}/auth/register
+Content-Type: application/json
+
+{ "email": "seeker@campus.edu", "password": "correct horse battery", "displayName": "Sam" }
+
+> {% client.global.set("seekerVerify", response.body.verificationToken); %}
+
+###
+POST {{api}}/auth/verify
+Content-Type: application/json
+
+{ "token": "{{seekerVerify}}" }
+
+###
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "email": "seeker@campus.edu", "password": "correct horse battery" }
+
+> {% client.global.set("seekerToken", response.body.accessToken); %}
+
+
+### 6. Seeker reports the LOST laptop — matching runs automatically on create
+POST {{api}}/listings
+Authorization: Bearer {{seekerToken}}
+Content-Type: application/json
+
+{
+  "kind": "LOST",
+  "title": "Lost silver Dell laptop",
+  "description": "Silver Dell XPS 13 with a rainbow vinyl sticker on the lid",
+  "category": "LAPTOP",
+  "building": "Main Library",
+  "eventDate": "2026-03-10",
+  "privateDetails": "Cracked lower-left corner of the lid"
+}
+
+> {% client.global.set("lostId", response.body.id); %}
+
+
+### 7. Public search + filter (no auth)
+# curl "$api/listings?q=dell&category=LAPTOP&kind=FOUND&page=0&size=20&sort=eventDate,desc"
+GET {{api}}/listings?q=dell&category=LAPTOP&page=0&size=20&sort=eventDate,desc
+
+
+### 8. Public listing detail — privateDetails and reporter are absent for a stranger
+GET {{api}}/listings/{{foundId}}
+
+
+### 9. Seeker views the suggested matches for their lost listing (auth required)
+# curl "$api/listings/$LOST_ID/matches" -H "Authorization: Bearer $SEEKER"
+GET {{api}}/listings/{{lostId}}/matches
+Authorization: Bearer {{seekerToken}}
+
+> {% client.global.set("candidateId", response.body[0].candidateId); %}
+
+
+### 10. Seeker confirms the match — both listings move to MATCHED
+POST {{api}}/matches/{{candidateId}}/confirm
+Authorization: Bearer {{seekerToken}}
+
+
+### 11. Seeker submits an ownership claim describing the withheld detail
+POST {{api}}/listings/{{foundId}}/claims
+Authorization: Bearer {{seekerToken}}
+Content-Type: application/json
+
+{ "answer": "The lid has a crack in the lower-left corner and a rainbow sticker", "matchCandidateId": {{candidateId}} }
+
+> {% client.global.set("claimId", response.body.id); %}
+
+
+### 12. Finder approves the claim
+POST {{api}}/claims/{{claimId}}/decision
+Authorization: Bearer {{finderToken}}
+Content-Type: application/json
+
+{ "decision": "APPROVE", "note": "Description matches the item" }
+
+
+### 13. Finder marks the found listing RECOVERED (allowed now that a claim is approved)
+POST {{api}}/listings/{{foundId}}/status
+Authorization: Bearer {{finderToken}}
+Content-Type: application/json
+
+{ "status": "RECOVERED" }
+
+
+### 14. Contact the other party in-app (no email/phone exchanged)
+POST {{api}}/listings/{{lostId}}/contact
+Authorization: Bearer {{finderToken}}
+Content-Type: application/json
+
+{ "message": "I have your laptop at the Main Library front desk — bring your ID." }
+
+
+### 15. Read your inbox
+GET {{api}}/messages?box=inbox
+Authorization: Bearer {{seekerToken}}
+
+
+### 16. Flag a suspicious listing
+POST {{api}}/listings/{{foundId}}/flags
+Authorization: Bearer {{seekerToken}}
+Content-Type: application/json
+
+{ "reason": "WRONG_INFO", "details": "The building looks wrong for where I lost it" }
+
+
+### 17. (Moderator) work the flag queue
+GET {{api}}/moderation/flags?status=OPEN
+Authorization: Bearer {{moderatorToken}}
+
+
+### 18. The categories reference list
+GET {{api}}/categories
+
+
+### 19. Health
+GET {{host}}/actuator/health
