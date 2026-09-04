@@ -45,7 +45,9 @@ public class ModerationController {
                                             @RequestParam(required = false) Integer page,
                                             @RequestParam(required = false) Integer size,
                                             @RequestParam(required = false) String sort) {
-        Pageable pageable = Pageables.of(page, size, sort, SORT_FIELDS, "createdAt");
+        // a work queue defaults to oldest-unresolved first
+        Pageable pageable = Pageables.of(page, size, sort, SORT_FIELDS, "createdAt",
+                org.springframework.data.domain.Sort.Direction.ASC);
         return PageResponse.of(flags.queue(status, pageable), Mappers::flag);
     }
 

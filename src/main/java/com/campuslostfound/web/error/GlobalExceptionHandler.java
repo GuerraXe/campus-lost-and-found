@@ -18,11 +18,14 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Single place that turns every exception into an {@code application/problem+json}
@@ -75,6 +78,23 @@ public class GlobalExceptionHandler {
     ProblemDetail handleMalformed(Exception ex) {
         return base(HttpStatus.BAD_REQUEST, "invalid-request",
                 "The request body or parameters could not be read.");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ProblemDetail handleNoResource(NoResourceFoundException ex) {
+        return base(HttpStatus.NOT_FOUND, "not-found", "No such endpoint.");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ProblemDetail handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return base(HttpStatus.METHOD_NOT_ALLOWED, "method-not-allowed",
+                "That HTTP method is not supported on this endpoint.");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    ProblemDetail handleMediaType(HttpMediaTypeNotSupportedException ex) {
+        return base(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "unsupported-media-type",
+                "The request content type is not supported; send application/json.");
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)

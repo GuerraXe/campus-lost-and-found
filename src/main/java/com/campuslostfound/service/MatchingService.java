@@ -168,7 +168,7 @@ public class MatchingService {
     }
 
     private MatchCandidate loadInvolved(AppPrincipal actor, Long candidateId) {
-        MatchCandidate c = candidates.findById(candidateId)
+        MatchCandidate c = candidates.findByIdWithGraph(candidateId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Match not found."));
         boolean involved = actor.isModerator()
                 || actor.id().equals(c.getLostListing().getReporterId())
@@ -189,9 +189,7 @@ public class MatchingService {
         if (listing.getStatus() != ListingStatus.MATCHED) {
             return;
         }
-        boolean anyConfirmed = candidates.findForListing(listing.getId()).stream()
-                .anyMatch(c -> c.getStatus() == MatchStatus.CONFIRMED);
-        if (!anyConfirmed) {
+        if (!candidates.existsConfirmedForListing(listing.getId())) {
             listing.setStatus(ListingStatus.OPEN);
         }
     }

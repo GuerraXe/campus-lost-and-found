@@ -31,11 +31,15 @@ class ListingIT extends AbstractApiIT {
         mvc.perform(authPost("/api/v1/listings", token, Map.of(
                         "kind", "FOUND", "title", "Found keys", "description", "A set of keys on a blue lanyard",
                         "category", "KEYS", "eventDate", "2026-03-02", "building", "Library",
-                        "privateDetails", "Small brass keyring shaped like a cat")))
+                        "privateDetails", "Small brass keyring shaped like a cat",
+                        "attributes", java.util.List.of(Map.of("key", "COLOR", "value", "brass")))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("OPEN"))
                 .andExpect(jsonPath("$.categoryLabel").value("Keys"))
-                .andExpect(jsonPath("$.privateDetails").value("Small brass keyring shaped like a cat"));
+                .andExpect(jsonPath("$.privateDetails").value("Small brass keyring shaped like a cat"))
+                .andExpect(jsonPath("$.attributes.length()").value(1))
+                .andExpect(jsonPath("$.attributes[0].value").value("brass"))
+                .andExpect(jsonPath("$.reporter.displayName").exists());
 
         mvc.perform(authPost("/api/v1/listings", token, Map.of(
                         "kind", "FOUND", "title", "Future item", "description", "This date has not happened yet",

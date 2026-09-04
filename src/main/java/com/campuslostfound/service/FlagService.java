@@ -61,14 +61,14 @@ public class FlagService {
     @Transactional(readOnly = true)
     public Page<Flag> queue(FlagStatus status, Pageable pageable) {
         return status == null
-                ? flags.findByOrderByCreatedAtAsc(pageable)
-                : flags.findByStatusOrderByCreatedAtAsc(status, pageable);
+                ? flags.findAllWithListing(pageable)
+                : flags.findByStatusWithListing(status, pageable);
     }
 
     @Transactional
     public Flag resolve(AppPrincipal actor, Long flagId, Outcome outcome, String note) {
         guard.requireModerator(actor);
-        Flag flag = flags.findById(flagId)
+        Flag flag = flags.findByIdWithListing(flagId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Flag not found."));
         User moderator = guard.requireUser(actor.id());
         String trimmedNote = note == null || note.isBlank() ? null : note.trim();

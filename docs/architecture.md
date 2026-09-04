@@ -68,6 +68,11 @@ attribute that only exists as a convenience getter.
 `ListingRepository` also extends `JpaSpecificationExecutor` so the search endpoint can
 compose optional filters as a `Specification` built in `ListingService`.
 
+Because `spring.jpa.open-in-view` is **off**, every finder whose result is mapped to a
+DTO after the transaction closes (`findDetailById`, `findForListing`, `findByIdWithGraph`,
+`findInbox`/`findSent`/`findByIdWithRefs`, …) `join fetch`es exactly the associations the
+mapper reads. See [design-decisions.md DD-16](design-decisions.md).
+
 ### domain — `com.campuslostfound.domain`
 
 JPA entities (`AuditableEntity` mapped-superclass supplies `id` + audited timestamps).

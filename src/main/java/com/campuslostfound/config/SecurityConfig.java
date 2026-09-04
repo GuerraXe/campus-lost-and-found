@@ -68,8 +68,11 @@ public class SecurityConfig {
                                 "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/verify")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories").permitAll()
-                        // the matches view is NOT public even though listing reads are
-                        .requestMatchers(HttpMethod.GET, "/api/v1/listings/*/matches").authenticated()
+                        // these listing GETs are NOT public even though plain reads are
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/listings/mine", "/api/v1/listings/*/matches",
+                                "/api/v1/listings/*/claims")
+                        .authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/listings", "/api/v1/listings/**")
                         .permitAll()
                         .anyRequest().authenticated())

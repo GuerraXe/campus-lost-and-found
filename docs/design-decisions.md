@@ -96,3 +96,23 @@ a token's issuance would fail to invalidate that token.
 Repository lookups that traverse an association (`listing.reporter.id`, …) use JPQL
 `@Query` with named parameters. Clearer at a glance, and it avoids a Spring Data property-
 path resolver clash with convenience getters such as `Listing.getReporterId()`.
+
+### DD-16 — `open-in-view=false`, explicit fetch graphs, and a test profile that proves it
+The Open Session In View anti-pattern is disabled. Every read path that maps an entity to
+a response DTO after its transaction closes uses a dedicated repository finder that
+`join fetch`es exactly the associations the mapper touches (`Listing` → reporter +
+attributes; `MatchCandidate` → both listings + reasons; `ContactMessage` → listing +
+sender + recipient; `Claim` → claimant; `Flag` → listing). Identifier getters on a
+detached proxy are safe, so associations only id-accessed are left lazy. Tests activate
+`@ActiveProfiles("test")` and keep the production `application.yml` in effect
+(`application-test.yml` only overrides the datasource, secret, and rate-limit toggle), so
+a missing fetch surfaces as a failing test instead of only a production 500. An earlier
+version of this project shipped with the test config accidentally shadowing the main one
+and re-enabling OSIV, which hid this class of bug — hence the profile split.
+
+### DD-17 — Spring MVC framework exceptions get explicit 4xx handlers
+`GlobalExceptionHandler` has a catch-all `@ExceptionHandler(Exception.class)` that returns
+500. Without explicit handlers it would also swallow `NoResourceFoundException` (unknown
+route), `HttpRequestMethodNotSupportedException` (wrong verb), and
+`HttpMediaTypeNotSupportedException` and report them as 500 with a logged stack trace.
+Each now maps to its correct status (404 / 405 / 415) as `problem+json`.

@@ -5,6 +5,7 @@ import com.campuslostfound.domain.Listing;
 import com.campuslostfound.domain.ListingKind;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -39,4 +40,16 @@ public interface ListingRepository
 
     @Query("select l from Listing l where l.reporter.id = :reporterId order by l.createdAt desc")
     List<Listing> findByReporter(@Param("reporterId") Long reporterId);
+
+    /**
+     * Loads a listing with its reporter and attributes initialized, so the caller may map
+     * it to a detail response after the transaction closes ({@code open-in-view} is off).
+     */
+    @Query("""
+        select distinct l from Listing l
+        left join fetch l.reporter
+        left join fetch l.attributes
+        where l.id = :id
+        """)
+    Optional<Listing> findDetailById(@Param("id") Long id);
 }

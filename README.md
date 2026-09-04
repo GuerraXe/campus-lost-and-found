@@ -8,7 +8,7 @@ details, and flag suspicious listings for moderators.
 
 > **Status:** v1.0. Built through a SOLO-style process (inspect → requirements → domain →
 > schema → API → matching → security → testing → incremental build). `./mvnw verify` is
-> green on JDK 26 — **43 unit + 40 integration tests**. One framework: Spring Boot.
+> green on JDK 26 — **43 unit + 43 integration tests**. One framework: Spring Boot.
 
 ---
 
@@ -137,7 +137,7 @@ Requires a **JDK 21+** (developed on the bundled Oracle JDK 26; language level i
 Maven wrapper is committed.
 
 ```bash
-./mvnw verify                 # compile + 43 unit + 40 integration tests (H2)
+./mvnw verify                 # compile + 43 unit + 43 integration tests (H2)
 ./mvnw -q spring-boot:run     # start on :8080 against the configured PostgreSQL
 ./mvnw -q package             # build target/campus-lost-and-found.jar
 ```

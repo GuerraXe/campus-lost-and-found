@@ -53,6 +53,31 @@ class SecurityIT extends AbstractApiIT {
                 .andExpect(jsonPath("$.title").value("invalid-request"));
     }
 
+    @Test
+    void wrongHttpMethodIs405NotAServerError() throws Exception {
+        String token = newVerifiedUser("method@campus.edu");
+        long id = createListing(token, Map.of());
+        // /listings/{id} supports GET and PATCH, not PUT -> 405 problem+json, never a 500
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/listings/" + id).header("Authorization", "Bearer " + token))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.title").value("method-not-allowed"));
+    }
+
+    @Test
+    void unknownApiRouteIs404NotAServerError() throws Exception {
+        mvc.perform(authGet("/api/v1/nope/nothing/here", newVerifiedUser("route@campus.edu")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.stackTrace").doesNotExist());
+    }
+
+    @Test
+    void listingsMineRequiresAuth() throws Exception {
+        mvc.perform(get("/api/v1/listings/mine")).andExpect(status().isUnauthorized());
+    }
+
     private static org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder post(String u) {
         return org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(u);
     }

@@ -69,8 +69,7 @@ public class ListingService {
 
     @Transactional(readOnly = true)
     public View getForView(Long id, AppPrincipal actorOrNull) {
-        Listing listing = listings.findById(id)
-                .orElseThrow(() -> new Exceptions.NotFoundException("Listing not found."));
+        Listing listing = detailEntity(id);
         boolean privileged = actorOrNull != null
                 && (actorOrNull.id().equals(listing.getReporterId()) || actorOrNull.isModerator());
         if (listing.getStatus() == ListingStatus.REMOVED && !privileged) {
@@ -85,6 +84,12 @@ public class ListingService {
                 .orElseThrow(() -> new Exceptions.NotFoundException("Listing not found."));
     }
 
+    /** Loads a listing with reporter + attributes initialized for post-transaction mapping. */
+    private Listing detailEntity(Long id) {
+        return listings.findDetailById(id)
+                .orElseThrow(() -> new Exceptions.NotFoundException("Listing not found."));
+    }
+
     @Transactional(readOnly = true)
     public Page<Listing> search(SearchQuery q, Pageable pageable) {
         return listings.findAll(specFor(q), pageable);
@@ -92,7 +97,7 @@ public class ListingService {
 
     @Transactional
     public Listing patch(AppPrincipal actor, Long id, PatchCommand cmd) {
-        Listing listing = getEntity(id);
+        Listing listing = detailEntity(id);
         guard.requireOwnerOrModerator(actor, listing.getReporterId(), "listing");
         if (listing.getStatus().isTerminal()) {
             throw new Exceptions.ValidationException(
@@ -128,7 +133,7 @@ public class ListingService {
 
     @Transactional
     public Listing changeStatus(AppPrincipal actor, Long id, ListingStatus target) {
-        Listing listing = getEntity(id);
+        Listing listing = detailEntity(id);
 
         if (target == ListingStatus.REMOVED) {
             guard.requireModerator(actor);

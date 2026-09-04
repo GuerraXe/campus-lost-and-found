@@ -61,8 +61,10 @@ public class AccountService {
         if (target.isDeleted()) {
             throw new Exceptions.ValidationException("Cannot change the role of a deleted account.");
         }
-        target.setRole(role);
-        target.invalidateExistingTokens(); // drop any token carrying the old role
+        if (target.getRole() != role) {
+            target.setRole(role);
+            target.invalidateExistingTokens(); // drop any token carrying the old role
+        }
         return target;
     }
 }

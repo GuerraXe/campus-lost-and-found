@@ -39,12 +39,12 @@ public class MessageService {
         User sender = guard.requireVerified(actor);
         rateLimiter.check(RateLimiter.Bucket.CONTACT_MESSAGE, String.valueOf(actor.id()));
 
-        Listing listing = listings.findById(listingId)
+        Listing listing = listings.findDetailById(listingId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Listing not found."));
         if (listing.getStatus() == ListingStatus.REMOVED) {
             throw new Exceptions.NotFoundException("Listing not found.");
         }
-        User recipient = listing.getReporter();
+        User recipient = listing.getReporter(); // initialized by findDetailById
         if (recipient.getId().equals(sender.getId())) {
             throw new Exceptions.ForbiddenException("You cannot message yourself about your own listing.");
         }
@@ -63,7 +63,7 @@ public class MessageService {
 
     @Transactional
     public ContactMessage getAndMaybeMarkRead(AppPrincipal actor, Long messageId) {
-        ContactMessage message = messages.findById(messageId)
+        ContactMessage message = messages.findByIdWithRefs(messageId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Message not found."));
         boolean isSender = actor.id().equals(message.getSender().getId());
         boolean isRecipient = actor.id().equals(message.getRecipient().getId());
@@ -78,7 +78,7 @@ public class MessageService {
 
     @Transactional
     public ContactMessage markRead(AppPrincipal actor, Long messageId) {
-        ContactMessage message = messages.findById(messageId)
+        ContactMessage message = messages.findByIdWithRefs(messageId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Message not found."));
         if (!actor.id().equals(message.getRecipient().getId())) {
             throw new Exceptions.ForbiddenException("Only the recipient can mark a message read.");

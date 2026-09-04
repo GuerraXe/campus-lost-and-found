@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -22,9 +23,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 /**
  * Base for full-stack API tests: real Spring context, Flyway-migrated H2, MockMvc.
  * Every table is truncated before each test so cases are independent.
+ *
+ * <p>{@code @ActiveProfiles("test")} keeps the production {@code application.yml} in
+ * effect (only {@code application-test.yml} overrides are layered on top), so
+ * {@code spring.jpa.open-in-view=false} applies here too - a lazy-loading bug in a
+ * mapping path fails a test instead of only production.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 public abstract class AbstractApiIT {
 
     private static final String[] TABLES = {

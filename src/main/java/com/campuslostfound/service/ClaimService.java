@@ -87,7 +87,7 @@ public class ClaimService {
 
     @Transactional
     public Claim decide(AppPrincipal actor, Long claimId, boolean approve, String note) {
-        Claim claim = claims.findById(claimId)
+        Claim claim = claims.findByIdWithRefs(claimId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Claim not found."));
         guard.requireOwnerOrModerator(actor, claim.getListing().getReporterId(), "claim");
         if (!claim.isPending()) {
@@ -101,7 +101,7 @@ public class ClaimService {
 
     @Transactional
     public Claim withdraw(AppPrincipal actor, Long claimId) {
-        Claim claim = claims.findById(claimId)
+        Claim claim = claims.findByIdWithRefs(claimId)
                 .orElseThrow(() -> new Exceptions.NotFoundException("Claim not found."));
         if (!actor.id().equals(claim.getClaimantId())) {
             throw new Exceptions.ForbiddenException("Only the claimant can withdraw a claim.");
